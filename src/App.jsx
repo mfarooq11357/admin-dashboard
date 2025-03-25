@@ -6,6 +6,8 @@ import Dashboard from './dashboard'
 import ManageUsers from './manage-users.jsx'
 import ManageEvents from './manageEvents.jsx'
 import CreateEvent from './CreateEvent.jsx'
+import EditEvent from './editEvent.jsx'
+
 import AttendanceTracking from './AttendanceTracking.jsx'
 import Finances from './finances.jsx'
 import Settings from './Settings.jsx'
@@ -22,7 +24,8 @@ const App = () => {
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/manage-user" element={<ManageUsers />} />
                     <Route path="/manage-events" element={<ManageEvents />} />
-                    <Route path="/editEvent" element={<CreateEvent />} />
+                    <Route path="/createEvent" element={<CreateEvent />} />
+                    <Route path="/editEvent/:id" element={<EditEvent />} />
                     <Route path="/attendence" element={<AttendanceTracking />} />
                     <Route path="/finances" element={<Finances />} />
                     <Route path="/settings" element={<Settings />} />
