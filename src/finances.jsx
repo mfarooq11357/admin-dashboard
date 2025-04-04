@@ -83,7 +83,7 @@ export default function FinanceDashboard() {
     doc.setFontSize(10);
     doc.setTextColor(75, 85, 99);
     yPos += 7;
-    doc.text(`Total Collected: ${selectedEvent.finance.totalCollected.toFixed(2)} RS`, 20, yPos);
+    doc.text(`Total Collected: ${selectedEvent.finance.totalCollected.toFixed(2)} `, 20, yPos);
     yPos += 10;
 
     // Expenses Section
@@ -96,7 +96,7 @@ export default function FinanceDashboard() {
     if (selectedEvent.finance.expenses.length > 0) {
       const expensesData = selectedEvent.finance.expenses.map((exp) => [
         { content: exp.description, styles: { cellWidth: 120 } },
-        { content: `${exp.amount.toFixed(2)} RS`, styles: { halign: 'right' } }
+        { content: `${exp.amount.toFixed(2)} `, styles: { halign: 'right' } }
       ]);
 
       autoTable(doc, {
@@ -136,9 +136,9 @@ export default function FinanceDashboard() {
     autoTable(doc, {
       startY: yPos,
       body: [
-        ['Total Income', `${selectedEvent.finance.totalCollected.toFixed(2)} RS`],
-        ['Total Expenses', `${totalExpenses.toFixed(2)} RS`],
-        ['Net Amount', `${net.toFixed(2)} RS`]
+        ['Total Income', `${selectedEvent.finance.totalCollected.toFixed(2)} `],
+        ['Total Expenses', `${totalExpenses.toFixed(2)} `],
+        ['Net Amount', `${net.toFixed(2)} `]
       ],
       columnStyles: {
         0: { cellWidth: '70%', fontStyle: 'bold' },
@@ -170,6 +170,7 @@ export default function FinanceDashboard() {
 
   return (
     <div className="p-6 space-y-6 max-w-[1000px]">
+      <div className='flex justify-between'>
       <h1 className="text-2xl font-bold">Finances</h1>
       <NavLink
         to={selectedEvents.length === 1 ? `/financesdetails/${selectedEvents[0]}` : '#'}
@@ -184,6 +185,7 @@ export default function FinanceDashboard() {
           Edit finances
         </button>
       </NavLink>
+      </div>
 
       {/* Events Table */}
       <div className="border rounded-lg">
@@ -276,7 +278,7 @@ export default function FinanceDashboard() {
                       selectedEvent.finance.expenses.map((expense, index) => (
                         <div key={index} className="flex justify-between text-sm">
                           <span>{expense.description}</span>
-                          <span>{expense.amount.toFixed(2)} RS</span>
+                          <span className='ml-2'>{expense.amount.toFixed(2)} </span>
                         </div>
                       ))
                     ) : (
@@ -288,7 +290,7 @@ export default function FinanceDashboard() {
                         {selectedEvent.finance.expenses.reduce(
                           (sum, exp) => sum + exp.amount,
                           0
-                        ).toFixed(2)} RS
+                        ).toFixed(2)} 
                       </span>
                     </div>
                   </div>
@@ -299,11 +301,11 @@ export default function FinanceDashboard() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span>Total Collected</span>
-                      <span>{selectedEvent.finance.totalCollected.toFixed(2)} RS</span>
+                      <span>{selectedEvent.finance.totalCollected.toFixed(2)} </span>
                     </div>
                     <div className="flex justify-between font-medium pt-2 border-t">
                       <span>Total</span>
-                      <span>{selectedEvent.finance.totalCollected.toFixed(2)} RS</span>
+                      <span>{selectedEvent.finance.totalCollected.toFixed(2)} </span>
                     </div>
                   </div>
                 </div>

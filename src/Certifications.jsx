@@ -152,7 +152,7 @@ export default function Certificates() {
                   <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">{user.rollNo}</td>
                   <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">{user.officialEmail}</td>
                   <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">{user.role}</td>
-                  <td className="px-3 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-left">
                     <button
                       onClick={() => generateCertificate(user)}
                       className="px-2 py-1 border border-transparent text-xs md:text-sm font-medium rounded-md text-green-600 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Search, Pencil } from "lucide-react";
+import { toast } from "react-toastify";
 
 const UsersPage = () => {
   // State management
@@ -91,10 +92,12 @@ const UsersPage = () => {
           },
         }
       );
+      toast.success("Role updated successfully!");
       closeModal();
       fetchUsers(currentPage, activeSearchQuery);
     } catch (error) {
       console.error("Error updating role:", error);
+      toast.error("Error updating role. Please try again.");
     }
   };
 
@@ -247,11 +250,6 @@ const EditRoleModal = ({ user, onClose, onSave }) => {
 export default UsersPage;
 
 
-
-
-
-
-
 // import React, { useState, useEffect } from "react";
 // import axios from "axios";
 // import { Search, Pencil } from "lucide-react";
@@ -266,7 +264,7 @@ export default UsersPage;
 //   const [searchQuery, setSearchQuery] = useState(""); // For the input field
 //   const [activeSearchQuery, setActiveSearchQuery] = useState(""); // For the current search
 
-//   // Function to check if the query is a roll number
+//   // Function to check if the query is a complete roll number
 //   const isRollNo = (query) => {
 //     const rollNoRegex = /^\d{6}98-\d{3}$/;
 //     return rollNoRegex.test(query);
@@ -278,9 +276,13 @@ export default UsersPage;
 //       const token = localStorage.getItem("token");
 //       let url;
 //       if (query) {
-//         const isRoll = isRollNo(query);
-//         const queryParam = isRoll ? `rollNo=${query}` : `name=${query}`;
-//         url = `http://localhost:3000/user/search?${queryParam}&page=${page}&limit=10`;
+//         // If it's a complete roll number, search only by rollNo,
+//         // otherwise, send both rollNo and name to allow partial matching
+//         if (isRollNo(query)) {
+//           url = `http://localhost:3000/user/search?rollNo=${query}&page=${page}&limit=10`;
+//         } else {
+//           url = `http://localhost:3000/user/search?rollNo=${query}&name=${query}&page=${page}&limit=10`;
+//         }
 //       } else {
 //         url = `http://localhost:3000/user/allUsers?page=${page}&limit=10`;
 //       }
@@ -301,6 +303,15 @@ export default UsersPage;
 //   useEffect(() => {
 //     fetchUsers(currentPage, activeSearchQuery);
 //   }, [currentPage, activeSearchQuery]);
+
+//   // Enhance live search: update active search query whenever searchQuery changes (with a debounce)
+//   useEffect(() => {
+//     const timer = setTimeout(() => {
+//       setActiveSearchQuery(searchQuery);
+//       setCurrentPage(1);
+//     }, 300); // debounce delay of 300ms
+//     return () => clearTimeout(timer);
+//   }, [searchQuery]);
 
 //   // Handle pagination button clicks
 //   const handlePageChange = (page) => {
@@ -486,4 +497,7 @@ export default UsersPage;
 // };
 
 // export default UsersPage;
+
+
+
 

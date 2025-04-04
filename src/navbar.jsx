@@ -1,4 +1,3 @@
-
 import React from "react";
 import { NavLink } from "react-router-dom"; // Import NavLink
 import {
@@ -6,6 +5,7 @@ import {
   Users,
   Calendar,
   MessageSquare,
+  MessageCircle,
   DollarSign,
   Bell,
   HelpCircle,
@@ -41,6 +41,7 @@ const Sidebar = ({ className }) => {
           {customNavLink(<Calendar className="h-4 w-4" />, "Manage Events", "/manage-events")}
           {customNavLink(<MessageSquare className="h-4 w-4" />, "Certifications", "/Certifications")}
           {customNavLink(<DollarSign className="h-4 w-4" />, "Finances", "/finances")}
+          {customNavLink(<MessageCircle className="h-4 w-4" />, "Discussions", "/discussions")}
           <div className="my-4 border-t border-zinc-800" />
           {customNavLink(<Bell className="h-4 w-4" />, "Notifications", "/notifications")}
           {customNavLink(<HelpCircle className="h-4 w-4" />, "Help", "/help")}
