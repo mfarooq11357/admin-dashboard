@@ -15,7 +15,8 @@ import Help from './help.jsx';
 import Notifications from './notifications.jsx';
 import Certifications from './Certifications.jsx';
 import FinancesDetails from './financesdetails.jsx';
-
+import ProfileEditPage from './EditProfile.jsx'; 
+import Disscussions from './discussions.jsx'
 const App = () => {
   return (
     <Router>
@@ -23,6 +24,8 @@ const App = () => {
         <Navbar />
         <Routes>
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/discussions" element={<Disscussions />} />
+
           <Route path="/manage-user" element={<ManageUsers />} />
           <Route path="/manage-events" element={<ManageEvents />} />
           <Route path="/createEvent" element={<CreateEvent />} />
@@ -31,6 +34,8 @@ const App = () => {
           <Route path="/finances" element={<Finances />} />
           <Route path="/financesdetails/:id" element={<FinancesDetails />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/EditProfile" element={<ProfileEditPage />} />
+
           <Route path="/help" element={<Help />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/Certifications" element={<Certifications />} />

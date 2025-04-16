@@ -1,105 +1,118 @@
-import { Cog, Users, Shield, UserPlus, Wrench } from "lucide-react";
+"use client"
 
-export default function FAQs() {
+import { useState } from "react"
+import { Plus, Minus } from "lucide-react"
+
+const faqs = [
+  {
+    id: "faq-1",
+    number: "01",
+    question: "What is Society Management System?",
+    answer:
+      "The Society Management System is a comprehensive platform designed to streamline the management of societies, clubs, and organizations. It provides tools for membership management, event planning, financial tracking, and communication between members and administrators.",
+  },
+  {
+    id: "faq-2",
+    number: "02",
+    question: "How can members use this system?",
+    answer:
+      "Members can use this system to register for events, pay dues, communicate with other members, access important documents, view announcements, and participate in society activities. The user-friendly interface makes it easy to navigate and utilize all available features.",
+  },
+  {
+    id: "faq-3",
+    number: "03",
+    question: "Who can access the admin dashboard?",
+    answer:
+      "Only authorized individuals, such as society committee members or property managers, can access the admin dashboard to manage society operations.",
+  },
+  {
+    id: "faq-4",
+    number: "04",
+    question: "Is my personal data secure in this system?",
+    answer:
+      "Yes, your personal data is secure. We implement industry-standard encryption protocols, regular security audits, and strict access controls. All data is stored in compliance with relevant data protection regulations, and we never share your information with third parties without your explicit consent.",
+  },
+]
+
+function FAQSection() {
+  const [openFAQ, setOpenFAQ] = useState("faq-3")
+
+  const toggleFAQ = (id) => {
+    setOpenFAQ(openFAQ === id ? null : id)
+  }
+
   return (
-    <div className="container mx-auto px-4 py-12 bg-black">
-      <div className="mb-12 text-center">
-        <h1 className="text-5xl font-bold text-white mb-4 text-yellow-400">FAQs</h1>
+    <section className="max-w-5xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
+      <div className="text-center mb-12">
+        <h2 className="text-4xl font-bold mb-4">Need Help?</h2>
+        <p className="text-lg text-gray-700">
+          Facing issues? Get in touch at{" "}
+          <a href="mailto:example@uog.edu.pk" className="text-blue-600 hover:underline">
+            example@uog.edu.pk
+          </a>
+        </p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-        {/* FAQ 1 */}
-        <div className="bg-zinc-800 relative text-white">
-          <div className="p-6">
-            <h2 className="font-semibold text-lg mb-2">
-              What is a Society Management System?
-            </h2>
-            <p className="text-gray-300 pr-12">
-              A Society Management System is a platform designed to streamline
-              the operations of residential or commercial societies.
-            </p>
-            <div className="absolute bottom-4 right-4">
-              <div className="w-16 h-16 flex items-center justify-center">
-                <Cog className="w-8 h-8 text-yellow-400" />
-              </div>
-            </div>
-          </div>
-        </div>
 
-        {/* FAQ 2 */}
-        <div className="bg-zinc-800 relative text-white">
-          <div className="p-6">
-            <h2 className="font-semibold text-lg mb-2">
-              How can members use this system?
-            </h2>
-            <p className="text-gray-300 pr-12">
-              Members can log in to their accounts to pay bills, submit
-              maintenance requests, view notices, and communicate with the
-              management committee.
-            </p>
-            <div className="absolute bottom-4 right-4">
-              <div className="w-16 h-16 flex items-center justify-center">
-                <Users className="w-8 h-8 text-yellow-400" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* FAQ 3 */}
-        <div className="bg-zinc-800 relative text-white">
-          <div className="p-6">
-            <h2 className="font-semibold text-lg mb-2">
-              Is my personal data secure in this system?
-            </h2>
-            <p className="text-gray-300 pr-12">
-              Yes, your data is encrypted and stored securely. Only authorized
-              personnel have access to sensitive information.
-            </p>
-            <div className="absolute bottom-4 right-4">
-              <div className="w-16 h-16 flex items-center justify-center">
-                <Shield className="w-8 h-8 text-yellow-400" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* FAQ 4 */}
-        <div className="bg-zinc-800 relative text-white">
-          <div className="p-6">
-            <h2 className="font-semibold text-lg mb-2">
-              Who can access the admin dashboard?
-            </h2>
-            <p className="text-gray-300 pr-12">
-              Only authorized individuals, such as society committee members or
-              property managers, can access the admin dashboard to manage
-              society operations.
-            </p>
-            <div className="absolute bottom-4 right-4">
-              <div className="w-16 h-16 flex items-center justify-center">
-                <UserPlus className="w-8 h-8 text-yellow-400" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* FAQ 5 */}
-        <div className="bg-zinc-800 relative text-white md:col-span-2 lg:col-span-2">
-          <div className="p-6">
-            <h2 className="font-semibold text-lg mb-2">
-              What should I do if I face a technical issue?
-            </h2>
-            <p className="text-gray-300 pr-12">
-              If you encounter any issues, contact the support team via the
-              'Help' section in the system or reach out to the management
-              committee.
-            </p>
-            <div className="absolute bottom-4 right-4">
-              <div className="w-16 h-16 flex items-center justify-center">
-                <Wrench className="w-8 h-8 text-yellow-400" />
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="mb-12">
+        <h3 className="text-4xl font-bold text-center mb-3">Frequently Asked Questions</h3>
+        <p className="text-center text-lg text-gray-700">
+          Everything you need to know about using our platform, all in one place.
+        </p>
       </div>
-    </div>
-  );
+
+      <div className="space-y-6">
+        {faqs.map((faq) => (
+          <div key={faq.id} className="rounded-lg border border-gray-200 overflow-hidden">
+            <button
+              onClick={() => toggleFAQ(faq.id)}
+              className="w-full flex items-center justify-between p-6 text-left focus:outline-none"
+              aria-expanded={openFAQ === faq.id}
+              aria-controls={`faq-answer-${faq.id}`}
+            >
+              <div className="flex items-center">
+                <span className="text-4xl font-bold mr-6">{faq.number}</span>
+                <h4 className="text-xl font-semibold">{faq.question}</h4>
+              </div>
+              <div className="flex-shrink-0 ml-4">
+                {openFAQ === faq.id ? <Minus className="h-6 w-6" /> : <Plus className="h-6 w-6" />}
+              </div>
+            </button>
+
+            <div
+              id={`faq-answer-${faq.id}`}
+              className={`relative overflow-hidden transition-all duration-500 ease-in-out ${
+                openFAQ === faq.id ? "max-h-96" : "max-h-0"
+              }`}
+            >
+              {openFAQ === faq.id && (
+                <div className="relative text-white p-6 pt-12 pb-12">
+                  {/* Mobile background */}
+                  <div className="absolute inset-0 bg-blue-600 md:hidden z-0" />
+                  
+                  {/* Original desktop image (unchanged) */}
+                  <div className="absolute inset-0 z-0 hidden md:block">
+                    <div className="absolute inset-0">
+                      <img
+                        src="https://i.ibb.co/P0KqJPD/111111111111.jpg"
+                        alt=""
+                        className="absolute inset-0 w-full h-18 object-cover pb-8"
+                        style={{ backgroundSize: "100% 100%" }}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Answer text with mobile adjustments */}
+                  <p className="relative z-10 text-lg md:px-0 px-4 lg:pt-16">
+                    {faq.answer}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
 }
+
+export default FAQSection

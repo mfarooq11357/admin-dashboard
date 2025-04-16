@@ -1,51 +1,61 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Check } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { toast } from 'react-toastify';
 
 export default function Certificates() {
-  const [users, setUsers] = useState([]);
+  const [requests, setRequests] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  // For client-side pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const requestsPerPage = 10;
 
-  // Fetch society members when the component mounts or page changes
+  // Fetch pending certificate requests when the component mounts
   useEffect(() => {
-    const fetchSocietyMembers = async () => {
+    const fetchCertificateRequests = async () => {
       try {
-        const response = await fetch(`http://localhost:3000/user/society-members?page=${currentPage}&limit=10`);
-        if (!response.ok) throw new Error('Failed to fetch society members');
+        const token = localStorage.getItem('token'); // or wherever you store it
+
+        const response = await fetch('http://localhost:3000/certificateRequestRoutes/admin/pending-requests', {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (!response.ok) throw new Error('Failed to fetch certificate requests');
         const data = await response.json();
-        setUsers(data.societyMembers || []);
-        setTotalPages(data.totalPages || 1);
+        setRequests(data.pendingRequests || []);
       } catch (error) {
-        console.error('Error fetching society members:', error);
-        toast.error('Error fetching society members');
-        setUsers([]);
+        console.error('Error fetching certificate requests:', error);
+        toast.error('Error fetching certificate requests');
+        setRequests([]);
       }
     };
-    fetchSocietyMembers();
-  }, [currentPage]);
+    fetchCertificateRequests();
+  }, []);
+
+  // Filter requests based on search term (applies on user's first name, last name, or roll number)
+  const filteredRequests = requests.filter((req) => {
+    const { firstName, lastName, rollNo } = req.userId;
+    const fullName = `${firstName} ${lastName}`.toLowerCase();
+    return (
+      fullName.includes(searchTerm.toLowerCase()) ||
+      rollNo.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
+
+  const totalPages = Math.ceil(filteredRequests.length / requestsPerPage);
+  const currentRequests = filteredRequests.slice(
+    (currentPage - 1) * requestsPerPage,
+    currentPage * requestsPerPage
+  );
 
   // Handle search functionality
-  const handleSearch = async () => {
-    try {
-      const response = await fetch(
-        `http://localhost:3000/user/searchByRole?role=society member&name=${searchTerm}&rollNo=${searchTerm}&page=1&limit=10`
-      );
-      if (!response.ok) throw new Error('Search failed');
-      const data = await response.json();
-      setUsers(data.users || []);
-      setTotalPages(data.totalPages || 1);
-      setCurrentPage(1); // Reset to first page on search
-    } catch (error) {
-      console.error('Error searching users:', error);
-      toast.error('Error searching users');
-      setUsers([]);
-    }
+  const handleSearch = () => {
+    setCurrentPage(1); // Reset to first page on search
   };
 
-  // Generate character certificate as PDF
+  // Generate character certificate as PDF using the user details from the request
   const generateCertificate = (user) => {
     try {
       const doc = new jsPDF();
@@ -88,6 +98,29 @@ export default function Certificates() {
     }
   };
 
+  // Resolve a certificate request (mark as solved)
+  const resolveRequest = async (requestId) => {
+    try {
+      const token = localStorage.getItem('token'); // or wherever you store it
+
+      const response = await fetch(`http://localhost:3000/certificateRequestRoutes/admin/resolve-request/${requestId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) throw new Error('Failed to resolve certificate request');
+      const data = await response.json();
+      toast.success('Certificate request resolved successfully');
+      // Remove the resolved request from the list
+      setRequests((prev) => prev.filter((req) => req._id !== requestId));
+    } catch (error) {
+      console.error('Error resolving certificate request:', error);
+      toast.error('Error resolving certificate request');
+    }
+  };
+
   return (
     <div className="p-4 md:p-6 space-y-4 md:space-y-6">
       {/* Header */}
@@ -115,11 +148,13 @@ export default function Certificates() {
           >
             Search
           </button>
-          {/* Optional: Remove or adjust "Add New" button if not needed */}
-          {/* <button className="flex-1 sm:flex-none px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center">
+          {/* Optional: "Add New" button remains commented if not needed */}
+          {/*
+          <button className="flex-1 sm:flex-none px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center">
             <Plus className="h-4 w-4 mr-2" />
             <span className="whitespace-nowrap">Add New</span>
-          </button> */}
+          </button>
+          */}
         </div>
       </div>
 
@@ -128,44 +163,68 @@ export default function Certificates() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="w-12 px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring focus:ring-blue-200" />
+              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Name
               </th>
-              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Roll No</th>
-              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Email</th>
-              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Role</th>
-              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Certificate</th>
+              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Roll No
+              </th>
+              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                Email
+              </th>
+              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                Role
+              </th>
+              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Certificate
+              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {users.length > 0 ? (
-              users.map((user) => (
-                <tr key={user._id}>
+            {currentRequests.length > 0 ? (
+              currentRequests.map((req) => (
+                <tr key={req._id}>
                   <td className="px-3 py-4 whitespace-nowrap">
-                    <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring focus:ring-blue-200" />
+                    <div className="text-sm font-medium text-gray-900">
+                      {req.userId.firstName} {req.userId.lastName}
+                    </div>
+                    <div className="text-sm text-gray-500 sm:hidden">
+                      {req.userId.role}
+                    </div>
                   </td>
-                  <td className="px-3 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{user.firstName} {user.lastName}</div>
-                    <div className="text-sm text-gray-500 sm:hidden">{user.role}</div>
+                  <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {req.userId.rollNo}
                   </td>
-                  <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">{user.rollNo}</td>
-                  <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">{user.officialEmail}</td>
-                  <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">{user.role}</td>
-                  <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-left">
+                  <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
+                    {req.userId.officialEmail}
+                  </td>
+                  <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell">
+                    {req.userId.role}
+                  </td>
+                  <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-left flex gap-2">
                     <button
-                      onClick={() => generateCertificate(user)}
+                      onClick={() => generateCertificate(req.userId)}
                       className="px-2 py-1 border border-transparent text-xs md:text-sm font-medium rounded-md text-green-600 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                     >
                       Generate Certificate
+                    </button>
+                    <button
+                      onClick={() => resolveRequest(req._id)}
+                      className="px-2 py-1 border border-transparent text-xs md:text-sm font-medium rounded-md text-blue-600 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      title="Resolve Request"
+                    >
+                      <Check className="h-4 w-4" />
                     </button>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="6" className="px-3 py-4 text-center text-sm text-gray-500">
-                  No society members found
+                <td
+                  colSpan="6"
+                  className="px-3 py-4 text-center text-sm text-gray-500"
+                >
+                  No certificate requests found
                 </td>
               </tr>
             )}
@@ -174,23 +233,29 @@ export default function Certificates() {
       </div>
 
       {/* Pagination Controls */}
-      <div className="flex justify-between items-center mt-4">
-        <button
-          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-          disabled={currentPage === 1}
-          className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 disabled:opacity-50"
-        >
-          Previous
-        </button>
-        <span>Page {currentPage} of {totalPages}</span>
-        <button
-          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-          disabled={currentPage === totalPages}
-          className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 disabled:opacity-50"
-        >
-          Next
-        </button>
-      </div>
+      {totalPages > 1 && (
+        <div className="flex justify-between items-center mt-4">
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <span>
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 }
