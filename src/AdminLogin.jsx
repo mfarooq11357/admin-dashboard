@@ -124,7 +124,7 @@ export default function AdminLogin() {
       )}
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
         <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8 z-10">
-          <h1 className="text-3xl font-bold text-center text-[#4B0082] mb-6">
+          <h1 className="text-3xl font-bold text-center text-[#2D50A1] mb-6">
             {otpSent ? 'Verify OTP' : 'Admin Login'}
           </h1>
 
@@ -138,7 +138,7 @@ export default function AdminLogin() {
                     {...register("email", { required: true, pattern: /^\S+@\S+$/i })}
                     type="email"
                     placeholder="you@domain.com"
-                    className={`w-full pl-10 pr-4 py-2 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md focus:ring-2 focus:ring-[#4B0082]`}
+                    className={`w-full pl-10 pr-4 py-2 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md focus:ring-2 focus:ring-[#2D50A1]`}
                   />
                   {errors.email && <p className="text-xs text-red-500 mt-1">Valid email required</p>}
                 </div>
@@ -152,7 +152,7 @@ export default function AdminLogin() {
                     {...register("password", { required: true })}
                     type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••"
-                    className={`w-full pl-10 pr-10 py-2 border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-md focus:ring-2 focus:ring-[#4B0082]`}
+                    className={`w-full pl-10 pr-10 py-2 border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-md focus:ring-2 focus:ring-[#2D50A1]`}
                   />
                   <button
                     type="button"
@@ -167,13 +167,13 @@ export default function AdminLogin() {
 
               <button
                 type="submit"
-                className="w-full bg-[#4B0082] text-white py-2 rounded-md hover:bg-[#3a0066] transition-transform transform hover:scale-105"
+                className="w-full bg-[#2D50A1] text-white py-2 rounded-md hover:bg-[#3a0066] transition-transform transform hover:scale-105"
               >
                 Sign In
               </button>
 
               <p className="text-center text-sm text-gray-600">
-                Not an admin? <Link to="/admin-login" className="text-[#4B0082] hover:underline">User login</Link>
+                Not an admin? <Link to="/admin-login" className="text-[#2D50A1] hover:underline">User login</Link>
               </p>
             </form>
           ) : (
@@ -188,13 +188,13 @@ export default function AdminLogin() {
                     maxLength={1}
                     value={v}
                     onChange={e => handleOtpChange(i, e.target.value)}
-                    className="w-12 h-12 text-center border border-gray-300 rounded-md focus:ring-2 focus:ring-[#4B0082]"
+                    className="w-12 h-12 text-center border border-gray-300 rounded-md focus:ring-2 focus:ring-[#2D50A1]"
                   />
                 ))}
               </div>
               <button
                 onClick={verifyOtp}
-                className="w-full bg-[#4B0082] text-white py-2 rounded-md hover:bg-[#3a0066] transition-transform transform hover:scale-105"
+                className="w-full bg-[#2D50A1] text-white py-2 rounded-md hover:bg-[#2D50A1] transition-transform transform hover:scale-105"
               >
                 Verify OTP
               </button>
