@@ -12,11 +12,11 @@ const ProfilePage = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const isOtpVerified = localStorage.getItem('isOtpVerified') === 'true';
-    if (!token || !isOtpVerified) {
-      navigate('/login');
-      return;
-    }
+    // const isOtpVerified = localStorage.getItem('isOtpVerified') === 'true';
+    // if (!token || !isOtpVerified) {
+    //   navigate('/admin-login');
+    //   return;
+    // }
 
     const fetchUserData = async () => {
       try {
@@ -30,11 +30,11 @@ const ProfilePage = () => {
           setUser(data.user);
         } else {
           toast.error('Failed to fetch user data');
-          navigate('/login');
+          navigate('/admin-login');
         }
       } catch (error) {
         toast.error('An error occurred while fetching user data');
-        navigate('/login');
+        navigate('/admin-login');
       } finally {
         setLoading(false);
       }

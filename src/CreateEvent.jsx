@@ -1,6 +1,8 @@
 
 import { useState, useEffect } from "react";
 import { Calendar, X, Plus, Upload, Loader2 } from "lucide-react";
+import { toast } from 'react-toastify';
+import crypto from 'crypto-js';
 
 const CreateEvent = () => {
   const [formData, setFormData] = useState({
@@ -11,23 +13,39 @@ const CreateEvent = () => {
     location: '',
     dateTime: '',
     picture: '',
-    organizers: [], // Changed to array of objects {id, name}
+    organizers: [],
     chiefGuests: []
   });
   const [showModal, setShowModal] = useState(false);
-  const [notification, setNotification] = useState(null);
   const [newChiefGuest, setNewChiefGuest] = useState({ name: '', picture: '' });
   const [uploading, setUploading] = useState(false);
   const [organizerSearchQuery, setOrganizerSearchQuery] = useState('');
   const [organizerSearchResults, setOrganizerSearchResults] = useState([]);
 
-  // Function to check if the query is a roll number
+  // Cloudinary configuration (same as ProfileEditPage)
+  const cloudName = 'diane1tak';
+  const apiKey = '595487194871695';
+  const apiSecret = 'mxA23kc58ZihQbGwPuM5mNicdFo';
+  const uploadPreset = 'sesmanagement';
+
+  // Signature generation function (same as ProfileEditPage)
+  const generateSignature = (paramsToSign, apiSecret) => {
+    const sortedParams = Object.keys(paramsToSign).sort().reduce((acc, key) => {
+      acc[key] = paramsToSign[key];
+      return acc;
+    }, {});
+    const paramString = Object.entries(sortedParams).map(([key, value]) => `${key}=${value}`).join('&');
+    const signature = crypto.SHA1(paramString + apiSecret).toString();
+    return signature;
+  };
+
+  // Check if query is a roll number
   const isRollNo = (query) => {
     const rollNoRegex = /^\d{6}98-\d{3}$/;
     return rollNoRegex.test(query);
   };
 
-  // Fetch organizers based on search query with debounce
+  // Fetch organizers with debounce
   const fetchOrganizerSearchResults = async (query) => {
     if (!query.trim()) {
       setOrganizerSearchResults([]);
@@ -35,16 +53,11 @@ const CreateEvent = () => {
     }
     try {
       const token = localStorage.getItem('token');
-      let url;
-      if (isRollNo(query)) {
-        url = `http://localhost:3000/user/search?rollNo=${query}&limit=10`;
-      } else {
-        url = `http://localhost:3000/user/search?rollNo=${query}&name=${query}&limit=10`;
-      }
+      let url = isRollNo(query)
+        ? `http://localhost:3000/user/search?rollNo=${query}&limit=10`
+        : `http://localhost:3000/user/search?rollNo=${query}&name=${query}&limit=10`;
       const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!response.ok) throw new Error('Search failed');
       const data = await response.json();
@@ -55,13 +68,49 @@ const CreateEvent = () => {
     }
   };
 
-  // Debounce the search API call
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchOrganizerSearchResults(organizerSearchQuery);
-    }, 300);
+    const timer = setTimeout(() => fetchOrganizerSearchResults(organizerSearchQuery), 300);
     return () => clearTimeout(timer);
   }, [organizerSearchQuery]);
+
+  // Handle image upload to Cloudinary
+  const handleFileUpload = async (file, onSuccess) => {
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file', { style: { background: 'white', color: 'black' } });
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const timestamp = Math.floor(Date.now() / 1000);
+      const paramsToSign = { timestamp, upload_preset: uploadPreset };
+      const signature = generateSignature(paramsToSign, apiSecret);
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', uploadPreset);
+      formData.append('api_key', apiKey);
+      formData.append('timestamp', timestamp);
+      formData.append('signature', signature);
+
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+
+      if (data.secure_url) {
+        onSuccess(data.secure_url);
+        toast.success('Image uploaded successfully', { style: { background: 'white', color: 'black' } });
+      } else {
+        throw new Error(data.error?.message || 'Upload failed');
+      }
+    } catch (error) {
+      toast.error(error.message, { style: { background: 'white', color: 'black' } });
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -80,14 +129,14 @@ const CreateEvent = () => {
         body: JSON.stringify({
           ...formData,
           registrationFee: Number(formData.registrationFee),
-          organizers: formData.organizers.map(org => org.id), // Send only IDs
+          organizers: formData.organizers.map(org => org.id),
           chiefGuests: formData.chiefGuests.filter(g => g.name && g.picture)
         })
       });
 
       if (!response.ok) throw new Error('Failed to create event');
-      
-      setNotification({ type: 'success', message: 'Event created successfully!' });
+
+      toast.success('Event created successfully!', { style: { background: 'white', color: 'black' } });
       setFormData({
         name: '',
         smallDescription: '',
@@ -102,27 +151,7 @@ const CreateEvent = () => {
       setOrganizerSearchQuery('');
       setOrganizerSearchResults([]);
     } catch (error) {
-      setNotification({ type: 'error', message: error.message });
-    }
-  };
-
-  // Generalized file upload handler
-  const handleFileUpload = async (file, onSuccess) => {
-    setUploading(true);
-    try {
-      const uploadData = new FormData();
-      uploadData.append('files', file);
-      const response = await fetch('http://51.20.78.40:3000/upload', {
-        method: 'POST',
-        body: uploadData,
-      });
-      if (!response.ok) throw new Error('Upload failed');
-      const data = await response.json();
-      onSuccess(data.url);
-    } catch (error) {
-      setNotification({ type: 'error', message: 'Image upload failed' });
-    } finally {
-      setUploading(false);
+      toast.error(error.message, { style: { background: 'white', color: 'black' } });
     }
   };
 
@@ -136,31 +165,14 @@ const CreateEvent = () => {
     }
   };
 
-  useEffect(() => {
-    if (notification) {
-      const timer = setTimeout(() => setNotification(null), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [notification]);
-
   return (
     <div className="w-full max-w-4xl mx-auto bg-white shadow-xl rounded-xl p-8 mb-8">
       <h1 className="text-3xl font-bold text-gray-800 mb-8">Create New Event</h1>
 
-      {notification && (
-        <div className={`fixed top-4 right-4 p-4 rounded-lg shadow-lg text-white ${
-          notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'
-        } animate-slide-in`}>
-          {notification.message}
-        </div>
-      )}
-
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Event Image Upload Section */}
         <div className="space-y-4">
-          <label className="block text-sm font-medium text-gray-700">
-            Event Image
-          </label>
+          <label className="block text-sm font-medium text-gray-700">Event Image</label>
           <div className="flex items-center justify-center">
             {formData.picture ? (
               <div className="relative group">
@@ -450,6 +462,12 @@ const CreateEvent = () => {
 export default CreateEvent;
 
 
+
+
+
+
+
+
 // import { useState, useEffect } from "react";
 // import { Calendar, X, Plus, Upload, Loader2 } from "lucide-react";
 
@@ -462,7 +480,7 @@ export default CreateEvent;
 //     location: '',
 //     dateTime: '',
 //     picture: '',
-//     organizers: [], // Array of objects {id, name}
+//     organizers: [], // Changed to array of objects {id, name}
 //     chiefGuests: []
 //   });
 //   const [showModal, setShowModal] = useState(false);
@@ -486,11 +504,16 @@ export default CreateEvent;
 //     }
 //     try {
 //       const token = localStorage.getItem('token');
-//       let url = isRollNo(query)
-//         ? `http://localhost:3000/user/search?rollNo=${query}&limit=10`
-//         : `http://localhost:3000/user/search?rollNo=${query}&name=${query}&limit=10`;
+//       let url;
+//       if (isRollNo(query)) {
+//         url = `http://localhost:3000/user/search?rollNo=${query}&limit=10`;
+//       } else {
+//         url = `http://localhost:3000/user/search?rollNo=${query}&name=${query}&limit=10`;
+//       }
 //       const response = await fetch(url, {
-//         headers: { 'Authorization': `Bearer ${token}` }
+//         headers: {
+//           'Authorization': `Bearer ${token}`
+//         }
 //       });
 //       if (!response.ok) throw new Error('Search failed');
 //       const data = await response.json();
@@ -501,8 +524,11 @@ export default CreateEvent;
 //     }
 //   };
 
+//   // Debounce the search API call
 //   useEffect(() => {
-//     const timer = setTimeout(() => fetchOrganizerSearchResults(organizerSearchQuery), 300);
+//     const timer = setTimeout(() => {
+//       fetchOrganizerSearchResults(organizerSearchQuery);
+//     }, 300);
 //     return () => clearTimeout(timer);
 //   }, [organizerSearchQuery]);
 
@@ -523,14 +549,13 @@ export default CreateEvent;
 //         body: JSON.stringify({
 //           ...formData,
 //           registrationFee: Number(formData.registrationFee),
-//           organizers: formData.organizers.map(org => org.id),
+//           organizers: formData.organizers.map(org => org.id), // Send only IDs
 //           chiefGuests: formData.chiefGuests.filter(g => g.name && g.picture)
 //         })
 //       });
-//       if (!response.ok) {
-//         const errorData = await response.json();
-//         throw new Error(errorData.message || 'Failed to create event');
-//       }
+
+//       if (!response.ok) throw new Error('Failed to create event');
+      
 //       setNotification({ type: 'success', message: 'Event created successfully!' });
 //       setFormData({
 //         name: '',
@@ -550,6 +575,7 @@ export default CreateEvent;
 //     }
 //   };
 
+//   // Generalized file upload handler
 //   const handleFileUpload = async (file, onSuccess) => {
 //     setUploading(true);
 //     try {
@@ -559,34 +585,24 @@ export default CreateEvent;
 //         method: 'POST',
 //         body: uploadData,
 //       });
-//       if (!response.ok) {
-//         const errorText = await response.text();
-//         throw new Error(`Upload failed: ${errorText}`);
-//       }
+//       if (!response.ok) throw new Error('Upload failed');
 //       const data = await response.json();
-//       console.log('Upload successful, URL:', data.url); // Debug log
-//       if (!data.url) throw new Error('No URL returned from upload');
 //       onSuccess(data.url);
 //     } catch (error) {
-//       console.error('Upload error:', error);
-//       setNotification({ type: 'error', message: error.message });
+//       setNotification({ type: 'error', message: 'Image upload failed' });
 //     } finally {
 //       setUploading(false);
 //     }
 //   };
 
 //   const addChiefGuest = () => {
-//     console.log('Attempting to add chief guest:', newChiefGuest); // Debug log
-//     if (!newChiefGuest.name.trim() || !newChiefGuest.picture.trim()) {
-//       setNotification({ type: 'error', message: 'Please provide both name and picture for the chief guest' });
-//       return;
+//     if (newChiefGuest.name.trim() && newChiefGuest.picture.trim()) {
+//       setFormData(prev => ({
+//         ...prev,
+//         chiefGuests: [...prev.chiefGuests, { ...newChiefGuest }]
+//       }));
+//       setNewChiefGuest({ name: '', picture: '' });
 //     }
-//     setFormData(prev => ({
-//       ...prev,
-//       chiefGuests: [...prev.chiefGuests, { ...newChiefGuest }]
-//     }));
-//     setNewChiefGuest({ name: '', picture: '' });
-//     console.log('Chief guest added:', newChiefGuest); // Debug log
 //   };
 
 //   useEffect(() => {
@@ -611,7 +627,9 @@ export default CreateEvent;
 //       <form onSubmit={handleSubmit} className="space-y-8">
 //         {/* Event Image Upload Section */}
 //         <div className="space-y-4">
-//           <label className="block text-sm font-medium text-gray-700">Event Image</label>
+//           <label className="block text-sm font-medium text-gray-700">
+//             Event Image
+//           </label>
 //           <div className="flex items-center justify-center">
 //             {formData.picture ? (
 //               <div className="relative group">
@@ -672,7 +690,7 @@ export default CreateEvent;
 //               />
 //             </div>
 //             <div>
-//               <label className="block text-sm font-medium text-gray-700 mb-2">Registration Fee (₹) *</label>
+//               <label className="block text-sm font-medium text-gray-700 mb-2">Registration Fee (Rs) *</label>
 //               <input
 //                 type="number"
 //                 value={formData.registrationFee}
@@ -899,7 +917,3 @@ export default CreateEvent;
 // };
 
 // export default CreateEvent;
-
-
-
-

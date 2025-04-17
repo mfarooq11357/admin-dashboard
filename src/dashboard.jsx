@@ -2,20 +2,20 @@ import { useEffect, useState } from 'react';
 import { Users } from 'lucide-react';
 import { Box, Text } from '@chakra-ui/react';
 import CountUp from 'react-countup';
+import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
-  // State for user counts
+  const navigate = useNavigate();
+  const [topNotifications, setTopNotifications] = useState([]);
   const [userCounts, setUserCounts] = useState({
     totalStudents: 0,
     totalSocietyMembers: 0,
     totalAdmins: 0,
   });
-  // State for upcoming event
   const [upcomingEvent, setUpcomingEvent] = useState(null);
   const token = localStorage.getItem('token');
 
   useEffect(() => {
-    // Fetch user counts
     const fetchUserCounts = async () => {
       try {
         const response = await fetch('http://localhost:3000/user/user-counts', {
@@ -32,7 +32,6 @@ export default function Dashboard() {
       }
     };
 
-    // Fetch upcoming event
     const fetchUpcomingEvent = async () => {
       try {
         const response = await fetch('http://localhost:3000/events/upcoming');
@@ -44,8 +43,27 @@ export default function Dashboard() {
       }
     };
 
+    const fetchNotifications = async () => {
+      try {
+        const response = await fetch('http://localhost:3000/event-registration-requests/requests', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        const data = await response.json();
+        if (response.ok) {
+          setTopNotifications(data.requests.slice(0, 3));
+        } else {
+          console.error('Failed to fetch notifications:', data.error);
+        }
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
+
     fetchUserCounts();
     fetchUpcomingEvent();
+    fetchNotifications();
   }, [token]);
 
   return (
@@ -70,7 +88,7 @@ export default function Dashboard() {
                   formattingFn={(value) => String(Math.floor(value)).padStart(2, '0')}
                 />
               </Text>
-              <Text className="text-sm text-muted-foreground">Total Students</Text>
+              <Text className="text-sm text-muted-foreground">Total Users</Text>
             </div>
           </div>
         </Box>
@@ -110,36 +128,45 @@ export default function Dashboard() {
 
       {/* Activity and Events Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Activity Log - Untouched */}
+        {/* Activity Section with Top 3 Notifications */}
         <Box className="p-6 rounded-lg shadow-md">
           <Text className="text-xl font-semibold mb-4">Activity</Text>
           <div className="space-y-4">
-            {activities.map((activity, index) => (
-              <div key={index} className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full bg-yellow-200 flex items-center justify-center text-yellow-800 font-semibold">
-                  {activity.user.charAt(0)}
+            {topNotifications.length > 0 ? (
+              topNotifications.map((notification) => (
+                <div
+                  key={notification._id}
+                  className="flex items-start gap-4 p-2 hover:bg-gray-100 rounded cursor-pointer"
+                  onClick={() => navigate('/notifications')}
+                >
+                  <img
+                    src={notification.userId.picture || "https://www.gravatar.com/avatar/?d=mp"}
+                    alt={`${notification.userId.firstName} ${notification.userId.lastName}`}
+                    className="w-10 h-10 rounded-full"
+                  />
+                  <div>
+                    <Text className="font-medium">
+                      {notification.userId.firstName} {notification.userId.lastName}
+                    </Text>
+                    <Text className="text-sm text-gray-600">
+                      Requested to register for {notification.eventId.name}
+                    </Text>
+                  </div>
                 </div>
-                <div>
-                  <Text className="font-medium">{activity.user}</Text>
-                  <Text className={`text-sm ${activity.type === 'Log In' ? 'text-green-500' : 'text-red-500'}`}>
-                    {activity.type}
-                  </Text>
-                  <Text className="text-xs text-muted-foreground">
-                    Time: {activity.time} | Location: {activity.location}
-                  </Text>
-                </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <Text className="text-gray-500">No recent notifications</Text>
+            )}
           </div>
         </Box>
 
-        {/* Updated Upcoming Events Section */}
+        {/* Upcoming Events Section */}
         <Box className="p-6 rounded-lg shadow-md bg-white">
           <Text className="text-xl font-semibold mb-4">Upcoming Event</Text>
           {upcomingEvent ? (
             <div className="space-y-4">
-              <img 
-                src={upcomingEvent.picture || '/placeholder-event.jpg'} 
+              <img
+                src={upcomingEvent.picture || '/placeholder-event.jpg'}
                 alt={upcomingEvent.name}
                 className="w-full h-48 object-cover rounded-lg"
               />
@@ -149,16 +176,16 @@ export default function Dashboard() {
                   {upcomingEvent.smallDescription}
                 </Text>
                 <div className="flex items-center gap-2 text-blue-600">
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    className="h-5 w-5" 
-                    viewBox="0 0 20 20" 
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
                     fill="currentColor"
                   >
-                    <path 
-                      fillRule="evenodd" 
-                      d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" 
-                      clipRule="evenodd" 
+                    <path
+                      fillRule="evenodd"
+                      d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+                      clipRule="evenodd"
                     />
                   </svg>
                   <Text className="text-sm">
@@ -167,7 +194,7 @@ export default function Dashboard() {
                       month: 'short',
                       day: 'numeric',
                       hour: '2-digit',
-                      minute: '2-digit'
+                      minute: '2-digit',
                     })}
                   </Text>
                 </div>
@@ -184,28 +211,6 @@ export default function Dashboard() {
     </div>
   );
 }
-
-const activities = [
-  {
-    user: "Ahmed Ali",
-    type: "Log In",
-    time: "08:55 UTC",
-    location: "Islamabad",
-  },
-  {
-    user: "Sajid Hussain",
-    type: "Log Out",
-    time: "08:55 UTC",
-    location: "Islamabad",
-  },
-  {
-    user: "Mohsin Ali",
-    type: "Log In",
-    time: "08:55 UTC",
-    location: "Islamabad",
-  },
-];
-
 
 
 

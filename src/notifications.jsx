@@ -1,103 +1,168 @@
-import React from 'react';
-import { Bell, Check } from 'lucide-react';
+"use client"
 
-const notifications = [
-  {
-    id: "1",
-    name: "Ahmed Khan",
-    type: "reminder",
-    message: "Your booking for 'Mehndi Event Decorations' on 15th December has been confirmed",
-    timestamp: "12-08-2024, 12:00 P.M.",
-    read: false,
-  },
-  {
-    id: "2",
-    name: "Jamal Ali",
-    type: "like",
-    message: "Jamal Ali liked your reply to the client's inquiry about 'DJ Sound System Rental.",
-    timestamp: "12-08-2024, 12:00 P.M.",
-    read: false,
-  },
-  {
-    id: "3",
-    name: "Yousaf Ali",
-    type: "mention",
-    message: "Yousaf tagged you in a post: 'Looking forward to working with you on our next project!'",
-    timestamp: "12-08-2024, 12:00 P.M.",
-    read: false,
-  },
-  {
-    id: "4",
-    name: "Usman Khan",
-    type: "comment",
-    message: "Usman khan commented: 'Can you provide a breakdown of the catering costs ?'",
-    timestamp: "12-08-2024, 12:00 P.M.",
-    read: true,
-  },
-  {
-    id: "5",
-    name: "Yousaf Ali",
-    type: "reminder",
-    message: "Update your payment method to avoid service interruptions.",
-    timestamp: "12-08-2024, 12:00 P.M.",
-    read: true,
-  },
-  {
-    id: "6",
-    name: "Yousaf Ali",
-    type: "system",
-    message: "The client has rescheduled their event 'Corporate Annual Meetup' to 18th December.",
-    timestamp: "12-08-2024, 12:00 P.M.",
-    read: true,
-  },
-];
+import { useState, useEffect } from "react"
+import { Bell } from "lucide-react"
+import { toast, ToastContainer } from "react-toastify"
+import "react-toastify/dist/ReactToastify.css"
 
-const NotificationsPanel = () => {
+const NotificationsPage = () => {
+  const [requests, setRequests] = useState([])
+
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        const token = localStorage.getItem("token")
+        if (!token) {
+          console.error("No token found. Please log in as admin.")
+          return
+        }
+
+        const response = await fetch(
+          "http://localhost:3000/event-registration-requests/requests",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        )
+        const data = await response.json()
+        if (response.ok) {
+          setRequests(data.requests || [])
+        } else {
+          console.error("Failed to fetch requests:", data.error)
+        }
+      } catch (error) {
+        console.error("Error fetching registration requests:", error)
+      }
+    }
+    fetchRequests()
+  }, [])
+
+  const handleAccept = async (requestId) => {
+    try {
+      const token = localStorage.getItem("token")
+      const response = await fetch(
+        `http://localhost:3000/event-registration-requests/requests/${requestId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ status: "accepted" }),
+        }
+      )
+      const data = await response.json()
+      if (response.ok) {
+        setRequests(requests.filter((req) => req._id !== requestId))
+        toast.success("Request accepted successfully.")
+      } else {
+        toast.error(data.error || "Failed to accept request.")
+      }
+    } catch (error) {
+      console.error("Error accepting request:", error)
+      toast.error("An error occurred while accepting the request.")
+    }
+  }
+
+  const handleReject = async (requestId) => {
+    try {
+      const token = localStorage.getItem("token")
+      const response = await fetch(
+        `http://localhost:3000/event-registration-requests/requests/${requestId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ status: "rejected" }),
+        }
+      )
+      const data = await response.json()
+      if (response.ok) {
+        setRequests(requests.filter((req) => req._id !== requestId))
+        toast.success("Request rejected successfully.")
+      } else {
+        toast.error(data.error || "Failed to reject request.")
+      }
+    } catch (error) {
+      console.error("Error rejecting request:", error)
+      toast.error("An error occurred while rejecting the request.")
+    }
+  }
+
   return (
-    <div className=" border rounded-lg ">
-      <div className="flex items-center justify-between p-4 border-b">
-        <h2 className="text-lg font-semibold">Notifications</h2>
-        <button className="text-sm text-gray-600 hover:text-gray-900">
-          Mark all as read
-        </button>
-      </div>
-      <div className=" overflow-y-auto">
-        <div className="divide-y">
-          {notifications.map((notification) => (
-            <div
-              key={notification.id}
-              className={`flex gap-3 p-4 ${notification.read ? "bg-white" : "bg-gray-50"}`}
-            >
-              <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                <span className="text-gray-600 font-medium">
-                  {notification.name.charAt(0)}
-                </span>
-              </div>
-              <div className="space-y-1 flex-1">
-                <p className="text-sm">
-                  <span className="font-medium">{notification.name}</span>
-                  <span className="text-gray-500"> · </span>
-                  <span className="text-gray-500">{notification.type}</span>
-                </p>
-                <p className="text-sm text-gray-600">{notification.message}</p>
-                <p className="text-xs text-gray-500">{notification.timestamp}</p>
-              </div>
-              {!notification.read ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-red-500">Unread</span>
-                  <div className="h-2 w-2 rounded-full bg-red-500" />
+    <div className="container mx-auto py-8 px-4 max-w-4xl">
+      <ToastContainer />
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="flex justify-between items-center p-6 border-b border-gray-200">
+          <div className="flex items-center gap-2">
+            <Bell className="h-6 w-6 text-blue-600" />
+            <h1 className="text-2xl font-bold">Notifications</h1>
+          </div>
+        </div>
+        <div className="divide-y divide-gray-100">
+          {requests.length > 0 ? (
+            requests.map((request) => (
+              <div
+                key={request._id}
+                className="p-4 sm:p-6 flex gap-4 bg-white hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex-shrink-0 mt-1">
+                  <img
+                    src={
+                      request.userId.picture ||
+                      "https://www.gravatar.com/avatar/?d=mp"
+                    }
+                    alt={`${request.userId.firstName} ${request.userId.lastName}`}
+                    className="w-10 h-10 rounded-full"
+                  />
                 </div>
-              ) : (
-                <Check className="h-4 w-4 text-green-500" />
-              )}
+                <div className="flex-grow">
+                  <p className="text-gray-700">
+                    <span className="font-semibold">
+                      {request.userId.firstName} {request.userId.lastName}
+                    </span>{" "}
+                    (Roll No: {request.userId.rollNo}) has requested to register
+                    for the event{" "}
+                    <span className="font-semibold">{request.eventId.name}</span>.
+                  </p>
+                  <div className="mt-2 flex gap-2">
+                    <button
+                      onClick={() => handleAccept(request._id)}
+                      className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md"
+                    >
+                      Accept
+                    </button>
+                    <button
+                      onClick={() => handleReject(request._id)}
+                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="p-8 text-center">
+              <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <Bell className="h-8 w-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-1">
+                No pending requests
+              </h3>
+              <p className="text-gray-500">
+                There are no registration requests to review at this time.
+              </p>
             </div>
-          ))}
+          )}
         </div>
       </div>
-
     </div>
-  );
-};
+  )
+}
 
-export default NotificationsPanel;
+export default NotificationsPage
 
